@@ -90,4 +90,34 @@ describe("handoff brief", () => {
     expect(stale.stale).toBe(true)
     expect(stale.generatedAt).toBe(first.generatedAt)
   })
+
+  test("builds a Turkish brief for a Turkish locale", async () => {
+    const { ctx } = makeContext()
+    const result = await generateBrief(ctx, { sessionID: "ses_test", locale: "tr-TR" })
+
+    expect(result.markdown).toContain("## İstek")
+    expect(result.markdown).toContain("## Neler değişti")
+    expect(result.markdown).toContain("## Doğrulama")
+    expect(result.markdown).toContain("## Sonraki adımlar")
+    expect(result.markdown).toContain("- Oturum: `ses_test`")
+    expect(result.markdown).toContain("İlk istek:")
+    expect(result.markdown).toContain("değişti")
+  })
+
+  test("regenerates a cached brief when the locale changes", async () => {
+    const { ctx } = makeContext()
+    const english = await generateBrief(ctx, { sessionID: "ses_test" })
+    expect(english.markdown).toContain("## Request")
+
+    const turkish = await generateBrief(ctx, { sessionID: "ses_test", locale: "tr" })
+    expect(turkish.markdown).toContain("## İstek")
+    expect(turkish.markdown).not.toContain("## Request")
+  })
+
+  test("falls back to English for an unsupported locale", async () => {
+    const { ctx } = makeContext()
+    const result = await generateBrief(ctx, { sessionID: "ses_test", locale: "de-DE" })
+
+    expect(result.markdown).toContain("## Request")
+  })
 })

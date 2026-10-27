@@ -22,6 +22,7 @@ export function BriefPanel(props: { session: MountedSession }) {
       const result = (await ctx.client.rpc(Handoff).generate({
         sessionID: props.session.id,
         force,
+        locale: ctx.locale.locale(),
         includeCommands: ctx.stores.prefs.value.includeCommands,
         includeTests: ctx.stores.prefs.value.includeTests,
       })) as GenerateOutput

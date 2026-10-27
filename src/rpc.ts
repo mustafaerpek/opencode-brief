@@ -6,6 +6,7 @@ const generateInput: JsonSchema.JsonSchema = {
   properties: {
     sessionID: { type: "string" },
     force: { type: "boolean" },
+    locale: { type: "string" },
     includeCommands: { type: "boolean" },
     includeTests: { type: "boolean" },
   },
@@ -58,6 +59,7 @@ export const Handoff = Rpc.define({
 export interface GenerateInput {
   sessionID: string
   force?: boolean
+  locale?: string
   includeCommands?: boolean
   includeTests?: boolean
 }

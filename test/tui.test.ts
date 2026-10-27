@@ -39,6 +39,7 @@ function makeContext(
 
   const context = {
     location: { directory },
+    options: { locale: "en" },
     data: {
       session: {
         list: () =>
@@ -149,7 +150,7 @@ describe("handoff tui", () => {
     const result = await generateBriefFor(fake.context, fake.sessionID)
 
     expect(result?.markdown).toBe("# Handoff: TUI")
-    expect(fake.generated).toEqual([{ sessionID: fake.sessionID, force: false }])
+    expect(fake.generated).toEqual([{ sessionID: fake.sessionID, force: false, locale: "en" }])
   })
 
   test("saves the brief through the server file API", async () => {

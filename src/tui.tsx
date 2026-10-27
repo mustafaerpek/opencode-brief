@@ -66,13 +66,28 @@ function wrapLine(line: string, width: number): string[] {
   return lines.map((value, index) => (index === 0 ? prefix : continuation) + value)
 }
 
+function tuiLocale(context: TuiContext): string | undefined {
+  const configured = context.options.locale
+  if (typeof configured === "string") return configured
+
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().locale
+  } catch {
+    return undefined
+  }
+}
+
 export async function generateBriefFor(
   context: TuiContext,
   sessionID: string,
   force = false,
 ): Promise<GenerateOutput | undefined> {
   try {
-    return (await context.client.rpc(Handoff).generate({ sessionID, force })) as GenerateOutput
+    return (await context.client.rpc(Handoff).generate({
+      sessionID,
+      force,
+      locale: tuiLocale(context),
+    })) as GenerateOutput
   } catch (cause) {
     context.ui.toast.show({
       title: "Handoff",
