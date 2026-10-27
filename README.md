@@ -1,0 +1,108 @@
+# opencode-handoff
+
+Turn an OpenCode session into a reviewable handoff brief.
+
+OpenCode sessions are long and full of tool calls. When a session ends, the useful parts are buried: which files changed, which commands ran, what passed, and what is still open. `opencode-handoff` collects that evidence into one Markdown brief that you can copy into a pull request, save as `HANDOFF.md`, or insert into the next prompt.
+
+## Status
+
+Early scaffold. The first version builds the brief from session messages and the working diff without calling a model.
+
+What works:
+
+- A `handoff.generate` RPC method that reads the session, shell commands, tool activity, and VCS changes.
+- A deterministic Markdown brief with request, changes, commands, verification, TODOs, and next steps.
+- A session side panel with Generate, Copy, Save, and Insert actions.
+- A command palette entry and a side-panel launcher.
+- A settings page for including commands and verification.
+- Cached briefs with a staleness check based on the session update time.
+
+Next:
+
+- Optional model-written "why" and "risks" sections.
+- Composer pill that shows when the brief is stale.
+- `HANDOFF.md` write-through.
+- PR description template.
+- TUI `/handoff` command.
+
+## Install for local development
+
+Build the GUI bundle first:
+
+```sh
+bun install
+bun run build
+```
+
+Then point OpenCode at this directory. In a project config:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": ["/absolute/path/to/opencode-handoff"]
+}
+```
+
+For OpenCode Desktop, put the package in the global config so the GUI loads in every window:
+
+```jsonc
+{
+  "plugins": ["/absolute/path/to/opencode-handoff"]
+}
+```
+
+`opencode.json(c)` is global at `~/.config/opencode/opencode.jsonc`. Desktop does not read `cli.json`.
+
+During development:
+
+```sh
+bun run dev
+```
+
+`vite build --watch` rebuilds `dist/gui-experimental.cjs`. Each rebuild reloads the GUI in every window and in the Electron main process. The server part does not restart.
+
+## Use
+
+1. Open a session.
+2. Run `Handoff: Open brief` from the command palette, or open the Brief tab from the side panel.
+3. Generate the brief.
+4. Copy it, save it as `HANDOFF.md`, or insert it into the composer.
+
+## Package layout
+
+```text
+src/
+├── index.ts          server part, registers the RPC
+├── rpc.ts            RPC contract shared by server and GUI
+├── brief/generate.ts deterministic brief builder
+├── gui.tsx           ./gui-experimental entry
+└── gui/
+    ├── definition.ts stores, i18n
+    ├── window.tsx    command, panel, menu item, settings page, styles
+    ├── panel.tsx     the Brief panel
+    ├── settings.tsx  settings rows
+    └── styles.ts     panel CSS
+```
+
+The package exposes:
+
+- `.` server part
+- `./rpc` RPC contract
+- `./gui-experimental` desktop GUI bundle
+
+## Privacy
+
+This version does not send session text to a model. It reads the session messages and the working diff on the OpenCode server and renders Markdown locally.
+
+The brief can include user prompts, assistant text, file paths, shell commands, and command output. Review it before pasting it into a public pull request or an external service.
+
+## Development
+
+```sh
+bun run typecheck
+bun run build
+```
+
+## License
+
+MIT
