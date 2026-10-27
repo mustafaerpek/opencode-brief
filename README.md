@@ -136,9 +136,11 @@ The package exposes:
 
 ## Privacy
 
-This version does not send session text to a model. It reads the session messages and the working diff on the OpenCode server and renders Markdown locally.
+This version does not send session text to a model or an external service. It reads the session messages and the working diff on the OpenCode server and renders Markdown locally. The plugin makes no network requests beyond the OpenCode server's RPC and file APIs.
 
-The brief can include user prompts, assistant text, file paths, shell commands, and command output. Review it before pasting it into a public pull request or an external service.
+The brief can include user prompts, assistant text, file paths, shell commands, and TODO text. Review it before pasting it into a public pull request or an external service.
+
+The last brief is cached in the plugin's server storage so the staleness check does not rebuild it. The cache holds the same session text as the brief and stays on the OpenCode server. The Desktop save action uses the system save dialog and writes only the file you choose. The TUI writes `HANDOFF.md` through the server's file API after you confirm the overwrite.
 
 ## Development
 
