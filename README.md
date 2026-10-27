@@ -1,5 +1,7 @@
 # opencode-brief
 
+[![npm version](https://img.shields.io/npm/v/opencode-brief)](https://www.npmjs.com/package/opencode-brief) [![CI](https://github.com/mustafaerpek/opencode-brief/actions/workflows/ci.yml/badge.svg)](https://github.com/mustafaerpek/opencode-brief/actions/workflows/ci.yml) [![license](https://img.shields.io/npm/l/opencode-brief)](https://github.com/mustafaerpek/opencode-brief/blob/main/LICENSE)
+
 Create a reviewable handoff brief from an OpenCode session.
 
 Long OpenCode sessions collect useful evidence in tool calls, shell commands, and diffs. `opencode-brief` turns that evidence into one Markdown brief that you can paste into a pull request, save as `HANDOFF.md`, or use to start the next session.
@@ -176,6 +178,13 @@ If `/handoff` does not appear after installing into an already running server, t
   ]
 }
 ```
+
+## Links
+
+- [npm package](https://www.npmjs.com/package/opencode-brief)
+- [GitHub repository](https://github.com/mustafaerpek/opencode-brief)
+- [Issues](https://github.com/mustafaerpek/opencode-brief/issues)
+- [Changelog](https://github.com/mustafaerpek/opencode-brief/blob/main/CHANGELOG.md)
 
 ## Contributing
 
