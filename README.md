@@ -75,7 +75,7 @@ After a brief exists, a composer pill appears when the session changes again. It
 
 ### Terminal
 
-1. Open a session and run `/handoff`, or pick `Handoff: Generate brief` from the command palette.
+1. Run `/handoff` in a session, or from Home to pick one from the session list. The command palette entry is `Handoff: Generate brief`.
 2. Choose `Show brief` to read the Markdown in a dialog, or `Save HANDOFF.md` to write it to the session directory.
 3. Run it again after more changes. A fresh cached brief is returned as is; a stale one is rebuilt.
 
