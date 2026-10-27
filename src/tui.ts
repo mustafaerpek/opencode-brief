@@ -55,6 +55,28 @@ export default Plugin.define({
       }
     }
 
+    const pickSession = async (): Promise<string | undefined> => {
+      const sessions = context.data.session
+        .list()
+        .filter((session) => session.parentID === undefined)
+        .sort((left, right) => right.time.updated - left.time.updated)
+        .slice(0, 20)
+
+      if (sessions.length === 0) {
+        await context.ui.dialog.alert({ title: "Handoff", message: "Open a session first." })
+        return undefined
+      }
+
+      return context.ui.dialog.select({
+        title: "Handoff: pick a session",
+        options: sessions.map((session) => ({
+          title: session.title?.trim() || "Untitled session",
+          value: session.id,
+          description: context.ui.format.path(session.location.directory),
+        })),
+      })
+    }
+
     context.keymap.layer(() => ({
       mode: "global",
       commands: [
@@ -67,17 +89,11 @@ export default Plugin.define({
           slash: { name: "handoff" },
           run: async () => {
             const route = context.ui.router.current()
+            const sessionID = route.type === "session" ? route.sessionID : await pickSession()
 
-            if (route.type !== "session") {
-              context.ui.toast.show({
-                title: "Handoff",
-                message: "Open a session first.",
-                variant: "warning",
-              })
-              return
-            }
+            if (!sessionID) return
 
-            const result = await generate(route.sessionID)
+            const result = await generate(sessionID)
             if (!result) return
 
             const action = await context.ui.dialog.select({
@@ -101,7 +117,7 @@ export default Plugin.define({
             }
 
             if (action === "save") {
-              await save(route.sessionID, result.markdown)
+              await save(sessionID, result.markdown)
             }
           },
         },
