@@ -18,17 +18,17 @@ What works:
 - Cached briefs with a staleness check based on the session update time.
 - A composer pill when the session moved past the cached brief; it opens the Brief panel.
 - A stale notice in the panel with a Regenerate action.
+- A `/handoff` slash command and a `Handoff: Generate brief` palette entry in the TUI. It shows the brief in a dialog or writes `HANDOFF.md`.
 
 Next:
 
 - Optional model-written "why" and "risks" sections.
-- `HANDOFF.md` write-through.
+- Desktop write-through to `HANDOFF.md`.
 - PR description template.
-- TUI `/handoff` command.
 
 ## Install for local development
 
-Build the GUI bundle first:
+Install dependencies. The TUI part loads from source, so it needs no build. Build the GUI bundle for Desktop:
 
 ```sh
 bun install
@@ -64,6 +64,8 @@ bun run dev
 
 ## Use
 
+### Desktop
+
 1. Open a session.
 2. Run `Handoff: Open brief` from the command palette, or open the Brief tab from the side panel.
 3. Generate the brief.
@@ -71,13 +73,22 @@ bun run dev
 
 After a brief exists, a composer pill appears when the session changes again. It reads `Handoff: brief is stale` and opens the Brief panel, where Regenerate replaces the cached brief. The pill does not appear before the first brief, because there is nothing to compare against.
 
+### Terminal
+
+1. Open a session and run `/handoff`, or pick `Handoff: Generate brief` from the command palette.
+2. Choose `Show brief` to read the Markdown in a dialog, or `Save HANDOFF.md` to write it to the session directory.
+3. Run it again after more changes. A fresh cached brief is returned as is; a stale one is rebuilt.
+
+The terminal command calls the same server RPC as the Desktop panel, so both surfaces share one brief builder and one cache.
+
 ## Package layout
 
 ```text
 src/
 ├── index.ts          server part, registers the RPC
-├── rpc.ts            RPC contract shared by server and GUI
+├── rpc.ts            RPC contract shared by server, TUI, and GUI
 ├── brief/generate.ts deterministic brief builder
+├── tui.ts            ./tui entry, the /handoff command
 ├── gui.tsx           ./gui-experimental entry
 └── gui/
     ├── definition.ts stores, i18n
@@ -92,6 +103,7 @@ The package exposes:
 
 - `.` server part
 - `./rpc` RPC contract
+- `./tui` terminal UI
 - `./gui-experimental` desktop GUI bundle
 
 ## Privacy
@@ -103,6 +115,7 @@ The brief can include user prompts, assistant text, file paths, shell commands, 
 ## Development
 
 ```sh
+bun test
 bun run typecheck
 bun run build
 ```
