@@ -1,75 +1,57 @@
-# opencode-handoff
+# opencode-brief
 
-Turn an OpenCode session into a reviewable handoff brief.
+Create a reviewable handoff brief from an OpenCode session.
 
-OpenCode sessions are long and full of tool calls. When a session ends, the useful parts are buried: which files changed, which commands ran, what passed, and what is still open. `opencode-handoff` collects that evidence into one Markdown brief that you can copy into a pull request, save as `HANDOFF.md`, or insert into the next prompt.
+Long OpenCode sessions collect useful evidence in tool calls, shell commands, and diffs. `opencode-brief` turns that evidence into one Markdown brief that you can paste into a pull request, save as `HANDOFF.md`, or use to start the next session.
 
-## Status
+The brief is deterministic. It does not call a model.
 
-Early scaffold. The first version builds the brief from session messages and the working diff without calling a model.
+## Features
 
-What works:
+- Desktop panel with Generate, Copy, Save, and Insert.
+- Terminal `/handoff` command and a scrollable Brief panel.
+- Composer pill when the session moved past the cached brief.
+- Cached briefs with a staleness check.
+- English and Turkish headings. Quoted session text keeps its own language.
+- No model calls and no external network requests.
 
-- A `handoff.generate` RPC method that reads the session, shell commands, tool activity, and VCS changes.
-- A deterministic Markdown brief with request, changes, commands, verification, TODOs, and next steps.
-- A session side panel with Generate, Copy, Save, and Insert actions.
-- A command palette entry and a side-panel launcher.
-- A settings page for including commands and verification.
-- Cached briefs with a staleness check based on the session update time.
-- A composer pill when the session moved past the cached brief; it opens the Brief panel.
-- A stale notice in the panel with a Regenerate action.
-- A `/handoff` slash command and a `Handoff: Open brief` palette entry in the TUI. It opens a scrollable Brief panel; `s` saves `HANDOFF.md`.
-- English and Turkish brief headings. The session text stays in the language it was written in.
+## Install
 
-Next:
+Requires OpenCode 2.2 or later. The Desktop GUI API is experimental and can change between releases.
 
-- Optional model-written "why" and "risks" sections.
-- Desktop write-through to `HANDOFF.md`.
-- PR description template.
+```sh
+opencode plugin add opencode-brief
+```
 
-## Install for local development
+Or add the package to the global config:
 
-Install dependencies. The TUI part loads from source, so it needs no build. Build the GUI bundle for Desktop:
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": ["opencode-brief"]
+}
+```
+
+`opencode.json(c)` is global at `~/.config/opencode/opencode.jsonc`. The same entry loads the server part, the Desktop GUI, and the TUI.
+
+Restart OpenCode Desktop after the install. A new CLI session loads the TUI part.
+
+### Local development
 
 ```sh
 bun install
 bun run build
 ```
 
-Then point OpenCode at this directory. In a project config:
+Point OpenCode at the package directory:
 
 ```jsonc
 {
-  "$schema": "https://opencode.ai/config.json",
-  "plugins": ["/absolute/path/to/opencode-handoff"]
+  "plugins": ["/absolute/path/to/opencode-brief"]
 }
 ```
 
-For OpenCode Desktop, put the package in the global config so the GUI loads in every window:
-
-```jsonc
-{
-  "plugins": ["/absolute/path/to/opencode-handoff"]
-}
-```
-
-`opencode.json(c)` is global at `~/.config/opencode/opencode.jsonc`. Desktop does not read `cli.json`.
-
-The CLI loads the TUI part from the same plugin list. If the server started before the package exposed `./tui`, its plugin metadata can be stale and `/handoff` stays hidden. Restart the background service, or add the package to `~/.config/opencode/cli.json` so the CLI loads the TUI entry locally:
-
-```jsonc
-{
-  "plugins": ["/absolute/path/to/opencode-handoff"]
-}
-```
-
-During development:
-
-```sh
-bun run dev
-```
-
-`vite build --watch` rebuilds `dist/gui-experimental.cjs`. Each rebuild reloads the GUI in every window and in the Electron main process. The server part does not restart.
+`bun run dev` rebuilds the GUI bundle on change. Each rebuild reloads the GUI in Desktop. The server part does not restart.
 
 ## Use
 
@@ -78,9 +60,9 @@ bun run dev
 1. Open a session.
 2. Run `Handoff: Open brief` from the command palette, or open the Brief tab from the side panel.
 3. Generate the brief.
-4. Copy it, save it as `HANDOFF.md`, or insert it into the composer.
+4. Copy it, save it, or insert it into the composer.
 
-After a brief exists, a composer pill appears when the session changes again. It reads `Handoff: brief is stale` and opens the Brief panel, where Regenerate replaces the cached brief. The pill does not appear before the first brief, because there is nothing to compare against.
+After a brief exists, a composer pill appears when the session changes again. It opens the Brief panel, where Regenerate replaces the cached brief. The pill does not appear before the first brief.
 
 ### Terminal
 
@@ -88,26 +70,62 @@ After a brief exists, a composer pill appears when the session changes again. It
 2. The Brief panel opens with the generated Markdown. Scroll it with the mouse or the arrow keys.
 3. Press `s` to save `HANDOFF.md`, `r` to regenerate, `f` to toggle full screen, and `esc` to close.
 
-The terminal panel calls the same server RPC as the Desktop panel, so both surfaces share one brief builder and one cache.
+The terminal panel and the Desktop panel call the same server RPC and share the same cache.
+
+## The brief
+
+The brief contains:
+
+- Header: session ID, directory, generation time, file count, command count.
+- Request: the first and latest user request.
+- What changed: working tree files with line counts and status.
+- Commands: shell commands other than tests.
+- Verification: test, typecheck, and lint commands with their exit status.
+- Tool activity: tool names and call counts.
+- Last assistant message.
+- Open questions: TODOs in the diff and missing verification.
+- Next steps.
+
+The brief quotes session text. It is not a summary. Read it before sharing it.
 
 ## Language
 
-The brief template follows the interface language. Desktop passes the app locale to the server, so a Turkish interface produces Turkish headings. The TUI uses the `locale` plugin option, then the system locale, then English. Session text, commands, and file paths stay in the language they were written in.
+Desktop follows the app locale. The TUI uses the `locale` plugin option, then the system locale, then English. Supported template locales are `en` and `tr`. Other locales fall back to English. Quoted session text, commands, and paths are not translated.
 
-Set the TUI language explicitly in `cli.json`:
+Set the TUI language in the plugin options:
 
 ```jsonc
 {
   "plugins": [
-    {
-      "package": "/absolute/path/to/opencode-handoff",
-      "options": { "locale": "tr" }
-    }
+    { "package": "opencode-brief", "options": { "locale": "tr" } }
   ]
 }
 ```
 
-Supported template locales are `en` and `tr`. Other locales fall back to English.
+The `locale` option affects the TUI brief. The Desktop brief follows the app language.
+
+## Settings
+
+The Desktop settings page controls whether the brief includes shell commands and verification. The TUI includes both by default.
+
+## Privacy
+
+The plugin does not call a model or an external service. It reads session messages, shell commands, tool activity, and the working diff through the OpenCode server, and renders Markdown locally. It makes no network requests beyond the OpenCode server's RPC and file APIs.
+
+The brief can include user prompts, assistant text, file paths, shell commands, and TODO text. Review it before pasting it into a public pull request or an external service.
+
+The last brief is cached in the plugin's server storage so the staleness check does not rebuild it. The cache holds the same session text as the brief and stays on the OpenCode server. The Desktop save action uses the system save dialog and writes only the file you choose. The TUI writes `HANDOFF.md` through the server's file API after you confirm the overwrite.
+
+## Development
+
+```sh
+bun install
+bun test
+bun run typecheck
+bun run build
+```
+
+`bun run dev` rebuilds the GUI bundle on change.
 
 ## Package layout
 
@@ -116,7 +134,7 @@ src/
 ├── index.ts          server part, registers the RPC
 ├── rpc.ts            RPC contract shared by server, TUI, and GUI
 ├── brief/generate.ts deterministic brief builder
-├── tui.tsx            ./tui entry, the /handoff command and Brief panel
+├── tui.tsx           ./tui entry, the /handoff command and Brief panel
 ├── gui.tsx           ./gui-experimental entry
 └── gui/
     ├── definition.ts stores, i18n
@@ -134,20 +152,27 @@ The package exposes:
 - `./tui` terminal UI
 - `./gui-experimental` desktop GUI bundle
 
-## Privacy
-
-This version does not send session text to a model or an external service. It reads the session messages and the working diff on the OpenCode server and renders Markdown locally. The plugin makes no network requests beyond the OpenCode server's RPC and file APIs.
-
-The brief can include user prompts, assistant text, file paths, shell commands, and TODO text. Review it before pasting it into a public pull request or an external service.
-
-The last brief is cached in the plugin's server storage so the staleness check does not rebuild it. The cache holds the same session text as the brief and stays on the OpenCode server. The Desktop save action uses the system save dialog and writes only the file you choose. The TUI writes `HANDOFF.md` through the server's file API after you confirm the overwrite.
-
-## Development
+## Publishing
 
 ```sh
 bun test
 bun run typecheck
-bun run build
+bun pm pack --dry-run
+bun publish
+```
+
+`prepack` builds the GUI bundle before packing. The published package includes `dist/gui-experimental.cjs`, `src`, the README, and the MIT license.
+
+## Troubleshooting
+
+If `/handoff` does not appear after installing into an already running server, the server may hold plugin metadata from before the package exposed `./tui`. Restart the background service, or list the package in `~/.config/opencode/cli.json`:
+
+```jsonc
+{
+  "plugins": [
+    { "package": "opencode-brief", "options": { "locale": "tr" } }
+  ]
+}
 ```
 
 ## License
