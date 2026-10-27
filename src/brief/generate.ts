@@ -265,7 +265,7 @@ async function collect(
 
 function render(evidence: Evidence, input: GenerateInput, locale: Locale): string {
   const t = messages[locale]
-  const title = evidence.session.title?.trim() || t.untitled
+  const title = (evidence.session.title?.trim() || t.untitled).replace(/\s+/g, " ")
   const additions = evidence.files.reduce((total, file) => total + file.additions, 0)
   const deletions = evidence.files.reduce((total, file) => total + file.deletions, 0)
   const testCommands = evidence.commands.filter((command) => isTestCommand(command.command))
@@ -274,8 +274,8 @@ function render(evidence: Evidence, input: GenerateInput, locale: Locale): strin
 
   lines.push(`# Handoff: ${title}`)
   lines.push("")
-  lines.push(`- ${t.session}: \`${evidence.session.id}\``)
-  lines.push(`- ${t.directory}: \`${evidence.session.location.directory}\``)
+  lines.push(`- ${t.session}: ${code(evidence.session.id)}`)
+  lines.push(`- ${t.directory}: ${code(evidence.session.location.directory)}`)
   lines.push(`- ${t.generated}: ${new Date().toISOString()}`)
   lines.push(`- ${t.files}: ${evidence.files.length} (+${additions}/-${deletions})`)
   lines.push(`- ${t.commands}: ${evidence.commands.length}, ${t.tests}: ${testCommands.length}`)
@@ -304,7 +304,7 @@ function render(evidence: Evidence, input: GenerateInput, locale: Locale): strin
     lines.push(t.noChanges)
   } else {
     for (const file of evidence.files) {
-      lines.push(`- \`${file.file}\` (+${file.additions}/-${file.deletions}, ${t.fileStatus[file.status]})`)
+      lines.push(`- ${code(file.file)} (+${file.additions}/-${file.deletions}, ${t.fileStatus[file.status]})`)
     }
   }
   lines.push("")
@@ -313,7 +313,7 @@ function render(evidence: Evidence, input: GenerateInput, locale: Locale): strin
     lines.push(`## ${t.commandSection}`)
     lines.push("")
     for (const command of otherCommands) {
-      lines.push(`- \`${clip(command.command, 160)}\` (${formatCommand(command)})`)
+      lines.push(`- ${code(clip(command.command, 160))} (${formatCommand(command)})`)
     }
     lines.push("")
   }
@@ -325,7 +325,7 @@ function render(evidence: Evidence, input: GenerateInput, locale: Locale): strin
       lines.push(t.noVerification)
     } else {
       for (const command of testCommands) {
-        lines.push(`- \`${clip(command.command, 160)}\` (${formatCommand(command)})`)
+        lines.push(`- ${code(clip(command.command, 160))} (${formatCommand(command)})`)
       }
     }
     lines.push("")
@@ -335,7 +335,7 @@ function render(evidence: Evidence, input: GenerateInput, locale: Locale): strin
     lines.push(`## ${t.toolActivity}`)
     lines.push("")
     for (const [name, count] of evidence.tools) {
-      lines.push(`- \`${name}\` x${count}`)
+      lines.push(`- ${code(name)} x${count}`)
     }
     lines.push("")
   }
@@ -353,7 +353,7 @@ function render(evidence: Evidence, input: GenerateInput, locale: Locale): strin
     lines.push(t.noTodos)
   } else {
     for (const todo of evidence.todos) {
-      lines.push(`- \`${todo.file}\`: ${todo.text}`)
+      lines.push(`- ${code(todo.file)}: ${todo.text}`)
     }
     if (testCommands.length === 0) {
       lines.push(`- ${t.incompleteVerification}`)
@@ -383,9 +383,18 @@ function formatCommand(command: ShellCommand): string {
 
 function blockquote(text: string): string {
   return text
+    .replace(/\r\n?/g, "\n")
     .split("\n")
     .map((line) => `> ${line}`)
     .join("\n")
+}
+
+function code(text: string): string {
+  const clean = text.replace(/\r?\n/g, " ")
+  if (!clean.includes("`")) return `\`${clean}\``
+
+  const fence = "`".repeat(Math.max(1, ...(clean.match(/`+/g) ?? []).map((run) => run.length + 1)))
+  return `${fence} ${clean} ${fence}`
 }
 
 function clip(text: string, max: number): string {

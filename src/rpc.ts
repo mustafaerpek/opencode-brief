@@ -6,7 +6,7 @@ const generateInput: JsonSchema.JsonSchema = {
   properties: {
     sessionID: { type: "string" },
     force: { type: "boolean" },
-    locale: { type: "string" },
+    locale: { type: "string", maxLength: 35 },
     includeCommands: { type: "boolean" },
     includeTests: { type: "boolean" },
   },
