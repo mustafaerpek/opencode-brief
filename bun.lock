@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "opencode-handoff",
+      "name": "opencode-brief",
       "dependencies": {
         "@opencode/plugin": "^2.2.0",
         "effect": "4.0.1",

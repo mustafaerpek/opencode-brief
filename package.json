@@ -1,9 +1,10 @@
 {
-  "name": "opencode-handoff",
+  "name": "opencode-brief",
   "version": "0.1.0",
-  "description": "Turn an OpenCode session into a reviewable handoff brief.",
+  "description": "Create a reviewable handoff brief from an OpenCode session.",
   "license": "MIT",
-  "keywords": ["opencode", "plugin", "handoff", "brief"],
+  "author": "Mustafa Erpek",
+  "keywords": ["opencode", "plugin", "handoff", "brief", "session"],
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
