@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import tui, { wrapBrief } from "../src/tui"
+import tui, { generateBriefFor, saveBrief, wrapBrief } from "../src/tui"
 
 type TuiContext = Parameters<typeof tui.setup>[0]
 type Layer = ReturnType<Parameters<TuiContext["keymap"]["layer"]>[0]>
@@ -20,12 +20,15 @@ function makeContext(
     directory?: string
     sessions?: SessionOption[]
     markdown?: string
+    panelOpen?: boolean
   } = {},
 ) {
   const generated: unknown[] = []
   const alerts: string[] = []
   const toasts: Array<{ message: string; variant?: string }> = []
   const writes: Array<{ location?: { directory?: string }; path: string; payload: Uint8Array }> = []
+  const opened: string[] = []
+  const navigated: unknown[] = []
   const layers: Array<() => Layer> = []
   const answers = [...(options.answers ?? [])]
   const sessionID = "ses_tui"
@@ -36,7 +39,6 @@ function makeContext(
 
   const context = {
     location: { directory },
-    renderer: { terminalWidth: 170 },
     data: {
       session: {
         list: () =>
@@ -57,7 +59,7 @@ function makeContext(
     },
     client: {
       rpc: () => ({
-        generate: async (input: unknown) => {
+        generate: async (input: { sessionID: string; force?: boolean }) => {
           generated.push(input)
           return { markdown, stale: false, generatedAt: 1 }
         },
@@ -70,7 +72,12 @@ function makeContext(
       },
     },
     ui: {
-      router: { current: () => route },
+      router: {
+        current: () => route,
+        navigate: (destination: unknown) => {
+          navigated.push(destination)
+        },
+      },
       dialog: {
         select: async () => answers.shift(),
         alert: async (input: { message: string }) => {
@@ -83,6 +90,15 @@ function makeContext(
         },
       },
       format: { path: (value: string) => value },
+      panel: {
+        open: (name: string) => {
+          opened.push(name)
+          return options.panelOpen ?? true
+        },
+        close: () => {},
+        current: () => undefined,
+      },
+      slot: () => () => {},
     },
     keymap: {
       layer: (factory: () => Layer) => {
@@ -91,7 +107,7 @@ function makeContext(
     },
   }
 
-  return { context: context as unknown as TuiContext, layers, generated, alerts, toasts, writes, sessionID }
+  return { context: context as unknown as TuiContext, layers, generated, alerts, toasts, writes, opened, navigated, sessionID }
 }
 
 function command(context: ReturnType<typeof makeContext>): Command {
@@ -102,7 +118,7 @@ function command(context: ReturnType<typeof makeContext>): Command {
 }
 
 describe("handoff tui", () => {
-  test("wraps long lines to the dialog width", () => {
+  test("wraps long lines to the panel width", () => {
     const path = "- Directory: `/Users/mustafaerpek/Documents/Projects/Libraries/opencode-handoff`"
     const wrapped = wrapBrief(`# Handoff\n\n${path}`, 40)
 
@@ -127,49 +143,49 @@ describe("handoff tui", () => {
     expect(lines.every((line) => line.length <= 40)).toBe(true)
   })
 
-  test("shows a wrapped brief in the dialog", async () => {
-    const fake = makeContext({ answers: ["show"], markdown: `- Directory: \`/${"a".repeat(200)}\`` })
-    tui.setup(fake.context)
+  test("generates a brief through the server RPC", async () => {
+    const fake = makeContext({ markdown: "# Handoff: TUI" })
 
-    await command(fake).run()
+    const result = await generateBriefFor(fake.context, fake.sessionID)
 
-    expect(fake.alerts).toHaveLength(1)
-    expect(fake.alerts[0].split("\n").every((line) => line.length <= 72)).toBe(true)
+    expect(result?.markdown).toBe("# Handoff: TUI")
+    expect(fake.generated).toEqual([{ sessionID: fake.sessionID, force: false }])
   })
 
-  test("generates the brief for the routed session and shows it", async () => {
-    const fake = makeContext({ answers: ["show"] })
-    tui.setup(fake.context)
+  test("saves the brief through the server file API", async () => {
+    const fake = makeContext()
 
-    await command(fake).run()
+    const saved = await saveBrief(fake.context, fake.sessionID, "# Handoff: TUI")
 
-    expect(fake.generated).toEqual([{ sessionID: fake.sessionID }])
-    expect(fake.alerts).toEqual(["# Handoff: TUI\n\n- test"])
-  })
-
-  test("saves HANDOFF.md through the server file API", async () => {
-    const fake = makeContext({ answers: ["save"] })
-    tui.setup(fake.context)
-
-    await command(fake).run()
-
-    expect(fake.writes).toHaveLength(1)
+    expect(saved).toBe(true)
     expect(fake.writes[0]).toMatchObject({ location: { directory: "/tmp/repo" }, path: "HANDOFF.md" })
-    expect(new TextDecoder().decode(fake.writes[0].payload)).toBe("# Handoff: TUI\n\n- test")
+    expect(new TextDecoder().decode(fake.writes[0].payload)).toBe("# Handoff: TUI")
     expect(fake.toasts.at(-1)?.variant).toBe("success")
   })
 
-  test("picks a session when none is routed", async () => {
+  test("opens the brief panel for the routed session", async () => {
+    const fake = makeContext()
+    tui.setup(fake.context)
+
+    await command(fake).run()
+
+    expect(fake.opened).toEqual(["handoff.brief"])
+    expect(fake.navigated).toEqual([])
+    expect(fake.generated).toEqual([])
+  })
+
+  test("picks a session and opens the panel from home", async () => {
     const fake = makeContext({
       route: { type: "home" },
-      answers: ["ses_other", "show"],
+      answers: ["ses_other"],
       sessions: [{ id: "ses_other", title: "Other session", directory: "/tmp/other" }],
     })
     tui.setup(fake.context)
 
     await command(fake).run()
 
-    expect(fake.generated).toEqual([{ sessionID: "ses_other" }])
+    expect(fake.navigated).toEqual([{ type: "session", sessionID: "ses_other" }])
+    expect(fake.opened).toEqual(["handoff.brief"])
   })
 
   test("alerts when there is no session to pick", async () => {
@@ -178,7 +194,7 @@ describe("handoff tui", () => {
 
     await command(fake).run()
 
-    expect(fake.generated).toEqual([])
     expect(fake.alerts).toEqual(["Open a session first."])
+    expect(fake.opened).toEqual([])
   })
 })
