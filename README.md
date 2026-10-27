@@ -6,6 +6,8 @@ Long OpenCode sessions collect useful evidence in tool calls, shell commands, an
 
 The brief is deterministic. It does not call a model.
 
+This is a community plugin, not an official OpenCode project. Source and issues: [github.com/mustafaerpek/opencode-brief](https://github.com/mustafaerpek/opencode-brief).
+
 ## Features
 
 - Desktop panel with Generate, Copy, Save, and Insert.
@@ -174,6 +176,10 @@ If `/handoff` does not appear after installing into an already running server, t
   ]
 }
 ```
+
+## Contributing
+
+Issues and pull requests are welcome at [github.com/mustafaerpek/opencode-brief](https://github.com/mustafaerpek/opencode-brief).
 
 ## License
 
