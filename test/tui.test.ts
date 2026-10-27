@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import tui from "../src/tui"
+import tui, { wrapBrief } from "../src/tui"
 
 type TuiContext = Parameters<typeof tui.setup>[0]
 type Layer = ReturnType<Parameters<TuiContext["keymap"]["layer"]>[0]>
@@ -19,6 +19,7 @@ function makeContext(
     answers?: string[]
     directory?: string
     sessions?: SessionOption[]
+    markdown?: string
   } = {},
 ) {
   const generated: unknown[] = []
@@ -31,9 +32,11 @@ function makeContext(
   const sessions = options.sessions ?? []
   const route = options.route ?? { type: "session", sessionID }
   const directory = options.directory ?? "/tmp/repo"
+  const markdown = options.markdown ?? "# Handoff: TUI\n\n- test"
 
   const context = {
     location: { directory },
+    renderer: { terminalWidth: 170 },
     data: {
       session: {
         list: () =>
@@ -56,7 +59,7 @@ function makeContext(
       rpc: () => ({
         generate: async (input: unknown) => {
           generated.push(input)
-          return { markdown: "# Handoff: TUI\n\n- test", stale: false, generatedAt: 1 }
+          return { markdown, stale: false, generatedAt: 1 }
         },
       }),
       file: {
@@ -99,6 +102,41 @@ function command(context: ReturnType<typeof makeContext>): Command {
 }
 
 describe("handoff tui", () => {
+  test("wraps long lines to the dialog width", () => {
+    const path = "- Directory: `/Users/mustafaerpek/Documents/Projects/Libraries/opencode-handoff`"
+    const wrapped = wrapBrief(`# Handoff\n\n${path}`, 40)
+
+    expect(wrapped.split("\n").every((line) => line.length <= 40)).toBe(true)
+    expect(wrapped).toContain("- Directory:")
+  })
+
+  test("keeps blockquote prefixes on wrapped lines", () => {
+    const wrapped = wrapBrief(`> ${"word ".repeat(20)}`, 24)
+    const lines = wrapped.split("\n")
+
+    expect(lines.every((line) => line.length <= 24)).toBe(true)
+    expect(lines.every((line) => line.startsWith("> "))).toBe(true)
+  })
+
+  test("indents list continuations without repeating the bullet", () => {
+    const wrapped = wrapBrief(`- Directory: \`/${"a".repeat(100)}\``, 40)
+    const lines = wrapped.split("\n")
+
+    expect(lines[0].startsWith("- ")).toBe(true)
+    expect(lines.slice(1).every((line) => !line.startsWith("- "))).toBe(true)
+    expect(lines.every((line) => line.length <= 40)).toBe(true)
+  })
+
+  test("shows a wrapped brief in the dialog", async () => {
+    const fake = makeContext({ answers: ["show"], markdown: `- Directory: \`/${"a".repeat(200)}\`` })
+    tui.setup(fake.context)
+
+    await command(fake).run()
+
+    expect(fake.alerts).toHaveLength(1)
+    expect(fake.alerts[0].split("\n").every((line) => line.length <= 72)).toBe(true)
+  })
+
   test("generates the brief for the routed session and shows it", async () => {
     const fake = makeContext({ answers: ["show"] })
     tui.setup(fake.context)

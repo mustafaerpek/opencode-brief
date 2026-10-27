@@ -1,6 +1,54 @@
 import { Plugin } from "@opencode/plugin/tui"
 import { Handoff, type GenerateOutput } from "./rpc"
 
+export function wrapBrief(text: string, width = 72): string {
+  return text
+    .split("\n")
+    .flatMap((line) => wrapLine(line, width))
+    .join("\n")
+}
+
+function wrapLine(line: string, width: number): string[] {
+  if (line.length <= width) return [line]
+
+  const prefix = line.match(/^(\s*(?:>\s*|[-*]\s+|\d+\.\s+)?)/)?.[1] ?? ""
+  const body = line.slice(prefix.length)
+  const available = Math.max(1, width - prefix.length)
+  const continuation = /^\s*>/.test(prefix)
+    ? prefix
+    : /^\s*(?:[-*]\s+|\d+\.\s+)$/.test(prefix)
+      ? " ".repeat(prefix.length)
+      : prefix
+  const words = body.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  let current = ""
+
+  for (const word of words) {
+    if (word.length > available) {
+      if (current) {
+        lines.push(current)
+        current = ""
+      }
+      for (let index = 0; index < word.length; index += available) {
+        lines.push(word.slice(index, index + available))
+      }
+      continue
+    }
+
+    if (!current) {
+      current = word
+    } else if (current.length + 1 + word.length <= available) {
+      current += ` ${word}`
+    } else {
+      lines.push(current)
+      current = word
+    }
+  }
+
+  if (current) lines.push(current)
+  return lines.map((value, index) => (index === 0 ? prefix : continuation) + value)
+}
+
 export default Plugin.define({
   id: "handoff.tui",
   setup(context) {
@@ -113,7 +161,8 @@ export default Plugin.define({
             })
 
             if (action === "show") {
-              await context.ui.dialog.alert({ title: "Handoff brief", message: result.markdown })
+              const width = Math.max(48, Math.min(72, context.renderer.terminalWidth - 24))
+              await context.ui.dialog.alert({ title: "Handoff brief", message: wrapBrief(result.markdown, width) })
             }
 
             if (action === "save") {
