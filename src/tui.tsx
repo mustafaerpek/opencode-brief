@@ -196,7 +196,15 @@ export default Plugin.define({
 
       const save = async () => {
         const text = markdown()
-        if (text) await saveBrief(context, props.panel.sessionID, text)
+        if (!text) return
+
+        const confirmed = await context.ui.dialog.confirm({
+          title: "Save HANDOFF.md?",
+          message: "This writes HANDOFF.md to the session directory and overwrites an existing file.",
+          label: { confirm: "Save", cancel: "Cancel" },
+        })
+
+        if (confirmed) await saveBrief(context, props.panel.sessionID, text)
       }
 
       context.keymap.layer(() => ({
