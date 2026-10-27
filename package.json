@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./rpc": "./src/rpc.ts",
+    "./tui": "./src/tui.ts",
     "./gui-experimental": "./dist/gui-experimental.cjs"
   },
   "files": [
