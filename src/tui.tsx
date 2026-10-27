@@ -18,6 +18,10 @@ interface PanelInput {
   readonly toggleFullscreen: () => void
 }
 
+export function stripControl(text: string): string {
+  return text.replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, "").replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "")
+}
+
 export function wrapBrief(text: string, width = 72): string {
   return text
     .split("\n")
@@ -240,7 +244,7 @@ export default Plugin.define({
         ],
       }))
 
-      const text = () => wrapBrief(markdown(), Math.max(24, props.panel.width - 3))
+      const text = () => wrapBrief(stripControl(markdown()), Math.max(24, props.panel.width - 3))
 
       return (
         <box flexDirection="column" flexGrow={1} height="100%" gap={1} paddingLeft={1} paddingRight={1}>

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import tui, { generateBriefFor, saveBrief, wrapBrief } from "../src/tui"
+import tui, { generateBriefFor, saveBrief, stripControl, wrapBrief } from "../src/tui"
 
 type TuiContext = Parameters<typeof tui.setup>[0]
 type Layer = ReturnType<Parameters<TuiContext["keymap"]["layer"]>[0]>
@@ -119,6 +119,12 @@ function command(context: ReturnType<typeof makeContext>): Command {
 }
 
 describe("handoff tui", () => {
+  test("strips terminal control sequences from the panel text", () => {
+    expect(stripControl("\x1b[31mred\x1b[0m")).toBe("red")
+    expect(stripControl("a\x07b")).toBe("ab")
+    expect(stripControl("line\nnext")).toBe("line\nnext")
+  })
+
   test("wraps long lines to the panel width", () => {
     const path = "- Directory: `/Users/mustafaerpek/Documents/Projects/Libraries/opencode-handoff`"
     const wrapped = wrapBrief(`# Handoff\n\n${path}`, 40)
