@@ -1,6 +1,6 @@
 {
   "name": "opencode-brief",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Create a reviewable handoff brief from an OpenCode session.",
   "license": "MIT",
   "author": "Mustafa Erpek",
