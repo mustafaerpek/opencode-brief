@@ -2,6 +2,7 @@ import { createSignal, Show } from "solid-js"
 import { createKeyed, usePlugin, type MountedSession } from "@opencode/plugin/gui"
 import { Handoff, type GenerateOutput } from "../rpc"
 import type { definition } from "./definition"
+import { setStatuses, statuses } from "./status"
 
 export function BriefPanel(props: { session: MountedSession }) {
   const ctx = usePlugin<typeof definition>()
@@ -9,6 +10,9 @@ export function BriefPanel(props: { session: MountedSession }) {
   const [markdown, setMarkdown] = createSignal("")
   const [loading, setLoading] = createSignal(false)
   const [error, setError] = createSignal<string>()
+
+  const status = () => statuses[props.session.key]
+  const stale = () => status()?.exists === true && status()?.stale === true
 
   const generate = async (force = false) => {
     setLoading(true)
@@ -23,6 +27,7 @@ export function BriefPanel(props: { session: MountedSession }) {
       })) as GenerateOutput
 
       setMarkdown(result.markdown)
+      setStatuses(props.session.key, { exists: true, stale: false, generatedAt: result.generatedAt })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
     } finally {
@@ -72,6 +77,15 @@ export function BriefPanel(props: { session: MountedSession }) {
           {ctx.t("panel.insert")}
         </ui.Button>
       </div>
+
+      <Show when={stale()}>
+        <div class="handoff-stale">
+          <span>{ctx.t("panel.stale")}</span>
+          <ui.Button variant="ghost" icon="refresh" busy={loading()} onClick={() => void generate(true)}>
+            {ctx.t("panel.regenerate")}
+          </ui.Button>
+        </div>
+      </Show>
 
       <Show when={error()}>
         {(message) => (

@@ -1,5 +1,6 @@
 import {
   Command,
+  ComposerPill,
   MenuItem,
   Panel,
   SettingsPage,
@@ -10,9 +11,11 @@ import {
 import type { definition } from "./definition"
 import { BriefPanel } from "./panel"
 import { HandoffSettings } from "./settings"
+import { statuses, watchStatus } from "./status"
 import { styles } from "./styles"
 
 export const setup: Plugin.Setup<typeof definition> = (ctx) => {
+  watchStatus(ctx)
   const tab: PanelTab = {
     id: "main",
     get title() {
@@ -78,6 +81,23 @@ export const setup: Plugin.Setup<typeof definition> = (ctx) => {
       return ctx.t("settings.title")
     },
     render: () => <HandoffSettings />,
+  })
+
+  ctx.add(ComposerPill, {
+    id: "stale",
+    order: 20,
+    show: (input) => {
+      const status = statuses[input.session.key]
+      if (!status?.exists || !status.stale) return undefined
+
+      return {
+        icon: "circle-exclamation",
+        label: ctx.t("pill.stale"),
+        title: ctx.t("pill.stale.description"),
+        tone: "warning",
+        run: () => ctx.layout.open(`${ctx.id}:main`, input.session),
+      }
+    },
   })
 
   ctx.add(Style, styles)
