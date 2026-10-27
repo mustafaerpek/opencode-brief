@@ -54,6 +54,14 @@ For OpenCode Desktop, put the package in the global config so the GUI loads in e
 
 `opencode.json(c)` is global at `~/.config/opencode/opencode.jsonc`. Desktop does not read `cli.json`.
 
+The CLI loads the TUI part from the same plugin list. If the server started before the package exposed `./tui`, its plugin metadata can be stale and `/handoff` stays hidden. Restart the background service, or add the package to `~/.config/opencode/cli.json` so the CLI loads the TUI entry locally:
+
+```jsonc
+{
+  "plugins": ["/absolute/path/to/opencode-handoff"]
+}
+```
+
 During development:
 
 ```sh
