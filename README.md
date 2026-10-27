@@ -16,11 +16,12 @@ What works:
 - A command palette entry and a side-panel launcher.
 - A settings page for including commands and verification.
 - Cached briefs with a staleness check based on the session update time.
+- A composer pill when the session moved past the cached brief; it opens the Brief panel.
+- A stale notice in the panel with a Regenerate action.
 
 Next:
 
 - Optional model-written "why" and "risks" sections.
-- Composer pill that shows when the brief is stale.
 - `HANDOFF.md` write-through.
 - PR description template.
 - TUI `/handoff` command.
@@ -68,6 +69,8 @@ bun run dev
 3. Generate the brief.
 4. Copy it, save it as `HANDOFF.md`, or insert it into the composer.
 
+After a brief exists, a composer pill appears when the session changes again. It reads `Handoff: brief is stale` and opens the Brief panel, where Regenerate replaces the cached brief. The pill does not appear before the first brief, because there is nothing to compare against.
+
 ## Package layout
 
 ```text
@@ -78,9 +81,10 @@ src/
 ├── gui.tsx           ./gui-experimental entry
 └── gui/
     ├── definition.ts stores, i18n
-    ├── window.tsx    command, panel, menu item, settings page, styles
+    ├── window.tsx    command, panel, menu item, settings page, composer pill, styles
     ├── panel.tsx     the Brief panel
     ├── settings.tsx  settings rows
+    ├── status.ts     cached brief status store and refresh
     └── styles.ts     panel CSS
 ```
 
