@@ -18,7 +18,7 @@ What works:
 - Cached briefs with a staleness check based on the session update time.
 - A composer pill when the session moved past the cached brief; it opens the Brief panel.
 - A stale notice in the panel with a Regenerate action.
-- A `/handoff` slash command and a `Handoff: Generate brief` palette entry in the TUI. It shows the brief in a dialog or writes `HANDOFF.md`.
+- A `/handoff` slash command and a `Handoff: Open brief` palette entry in the TUI. It opens a scrollable Brief panel; `s` saves `HANDOFF.md`.
 
 Next:
 
@@ -83,11 +83,11 @@ After a brief exists, a composer pill appears when the session changes again. It
 
 ### Terminal
 
-1. Run `/handoff` in a session, or from Home to pick one from the session list. The command palette entry is `Handoff: Generate brief`.
-2. Choose `Show brief` to read the Markdown in a dialog, or `Save HANDOFF.md` to write it to the session directory.
-3. Run it again after more changes. A fresh cached brief is returned as is; a stale one is rebuilt.
+1. Run `/handoff` in a session, or from Home to pick one from the session list. The command palette entry is `Handoff: Open brief`.
+2. The Brief panel opens with the generated Markdown. Scroll it with the mouse or the arrow keys.
+3. Press `s` to save `HANDOFF.md`, `r` to regenerate, `f` to toggle full screen, and `esc` to close.
 
-The terminal command calls the same server RPC as the Desktop panel, so both surfaces share one brief builder and one cache.
+The terminal panel calls the same server RPC as the Desktop panel, so both surfaces share one brief builder and one cache.
 
 ## Package layout
 
@@ -96,7 +96,7 @@ src/
 ├── index.ts          server part, registers the RPC
 ├── rpc.ts            RPC contract shared by server, TUI, and GUI
 ├── brief/generate.ts deterministic brief builder
-├── tui.ts            ./tui entry, the /handoff command
+├── tui.tsx            ./tui entry, the /handoff command and Brief panel
 ├── gui.tsx           ./gui-experimental entry
 └── gui/
     ├── definition.ts stores, i18n
