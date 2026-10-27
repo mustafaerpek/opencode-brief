@@ -126,7 +126,7 @@ describe("handoff tui", () => {
   })
 
   test("wraps long lines to the panel width", () => {
-    const path = "- Directory: `/Users/mustafaerpek/Documents/Projects/Libraries/opencode-handoff`"
+    const path = "- Directory: `/Users/example/Projects/opencode-brief`"
     const wrapped = wrapBrief(`# Handoff\n\n${path}`, 40)
 
     expect(wrapped.split("\n").every((line) => line.length <= 40)).toBe(true)
