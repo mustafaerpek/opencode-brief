@@ -19,6 +19,7 @@ What works:
 - A composer pill when the session moved past the cached brief; it opens the Brief panel.
 - A stale notice in the panel with a Regenerate action.
 - A `/handoff` slash command and a `Handoff: Open brief` palette entry in the TUI. It opens a scrollable Brief panel; `s` saves `HANDOFF.md`.
+- English and Turkish brief headings. The session text stays in the language it was written in.
 
 Next:
 
@@ -88,6 +89,25 @@ After a brief exists, a composer pill appears when the session changes again. It
 3. Press `s` to save `HANDOFF.md`, `r` to regenerate, `f` to toggle full screen, and `esc` to close.
 
 The terminal panel calls the same server RPC as the Desktop panel, so both surfaces share one brief builder and one cache.
+
+## Language
+
+The brief template follows the interface language. Desktop passes the app locale to the server, so a Turkish interface produces Turkish headings. The TUI uses the `locale` plugin option, then the system locale, then English. Session text, commands, and file paths stay in the language they were written in.
+
+Set the TUI language explicitly in `cli.json`:
+
+```jsonc
+{
+  "plugins": [
+    {
+      "package": "/absolute/path/to/opencode-handoff",
+      "options": { "locale": "tr" }
+    }
+  ]
+}
+```
+
+Supported template locales are `en` and `tr`. Other locales fall back to English.
 
 ## Package layout
 
