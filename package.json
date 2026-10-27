@@ -16,6 +16,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch",
+    "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

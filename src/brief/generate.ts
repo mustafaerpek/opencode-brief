@@ -135,7 +135,7 @@ async function collect(
       if (!line.startsWith("+") || line.startsWith("+++")) continue
       const match = line.match(/\b(TODO|FIXME|XXX)\b[:\s-]*(.*)/)
       if (!match) continue
-      todos.push({ file: file.file, text: `${match[1]} ${match[2]}`.trim() })
+      todos.push({ file: file.file, text: `${match[1]}: ${match[2]}`.trim() })
       if (todos.length >= 8) break
     }
     if (todos.length >= 8) break
