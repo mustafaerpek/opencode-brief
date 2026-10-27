@@ -27,10 +27,11 @@ const generateOutput: JsonSchema.JsonSchema = {
 const statusOutput: JsonSchema.JsonSchema = {
   type: "object",
   properties: {
+    exists: { type: "boolean" },
     stale: { type: "boolean" },
     generatedAt: { type: "number" },
   },
-  required: ["stale"],
+  required: ["exists", "stale"],
   additionalProperties: false,
 }
 
@@ -68,6 +69,7 @@ export interface GenerateOutput {
 }
 
 export interface StatusOutput {
+  exists: boolean
   stale: boolean
   generatedAt?: number
 }

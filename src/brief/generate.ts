@@ -62,9 +62,10 @@ export async function generateBrief(ctx: Plugin.Context, input: GenerateInput): 
 export async function briefStatus(ctx: Plugin.Context, sessionID: string): Promise<StatusOutput> {
   const [session, cached] = await Promise.all([ctx.session.get({ sessionID }), readCache(ctx, sessionID)])
 
-  if (!cached) return { stale: true }
+  if (!cached) return { exists: false, stale: true }
 
   return {
+    exists: true,
     stale: session.time.updated > cached.sessionUpdated,
     generatedAt: cached.generatedAt,
   }

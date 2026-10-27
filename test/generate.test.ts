@@ -72,14 +72,22 @@ describe("handoff brief", () => {
 
   test("marks the brief stale after the session updates", async () => {
     const { ctx, session } = makeContext()
+
+    const empty = await briefStatus(ctx, "ses_test")
+    expect(empty).toEqual({ exists: false, stale: true })
+
     const first = await generateBrief(ctx, { sessionID: "ses_test" })
     expect(first.stale).toBe(false)
 
     const fresh = await briefStatus(ctx, "ses_test")
+    expect(fresh.exists).toBe(true)
     expect(fresh.stale).toBe(false)
+    expect(fresh.generatedAt).toBe(first.generatedAt)
 
     session.time.updated = 200
     const stale = await briefStatus(ctx, "ses_test")
+    expect(stale.exists).toBe(true)
     expect(stale.stale).toBe(true)
+    expect(stale.generatedAt).toBe(first.generatedAt)
   })
 })
