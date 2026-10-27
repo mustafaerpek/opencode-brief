@@ -4,6 +4,14 @@
   "description": "Create a reviewable handoff brief from an OpenCode session.",
   "license": "MIT",
   "author": "Mustafa Erpek",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mustafaerpek/opencode-brief.git"
+  },
+  "homepage": "https://github.com/mustafaerpek/opencode-brief#readme",
+  "bugs": {
+    "url": "https://github.com/mustafaerpek/opencode-brief/issues"
+  },
   "keywords": ["opencode", "plugin", "handoff", "brief", "session"],
   "type": "module",
   "exports": {
